@@ -55,6 +55,11 @@ class Action(Enum):
     EAST = (0, 1, 1)
     NORTH = (-1, 0, 1)
     SOUTH = (1, 0, 1)
+    # Diagonal actions with cost sqrt(2)
+    NORTHWEST = (-1, -1, np.sqrt(2))
+    NORTHEAST = (-1, 1, np.sqrt(2))
+    SOUTHWEST = (1, -1, np.sqrt(2))
+    SOUTHEAST = (1, 1, np.sqrt(2))
 
     @property
     def cost(self):
@@ -84,6 +89,14 @@ def valid_actions(grid, current_node):
         valid_actions.remove(Action.WEST)
     if y + 1 > m or grid[x, y + 1] == 1:
         valid_actions.remove(Action.EAST)
+    if x - 1 < 0 or y - 1 < 0 or grid[x - 1, y - 1] == 1:
+        valid_actions.remove(Action.NORTHWEST)
+    if x - 1 < 0 or y + 1 > m or grid[x - 1, y + 1] == 1:
+        valid_actions.remove(Action.NORTHEAST)
+    if x + 1 > n or y - 1 < 0 or grid[x + 1, y - 1] == 1:
+        valid_actions.remove(Action.SOUTHWEST)
+    if x + 1 < n or y + 1 > m or grid[x + 1, y + 1] == 1:
+        valid_actions.remove(Action.SOUTHEAST)
 
     return valid_actions
 
@@ -144,3 +157,24 @@ def a_star(grid, h, start, goal):
 def heuristic(position, goal_position):
     return np.linalg.norm(np.array(position) - np.array(goal_position))
 
+# Prune path - collinearity check
+def point(p):
+    return np.array([p[0], p[1], 1.0]).reshape(1,-1)
+
+def collinearity_check(p1, p2, p3, epsilon=1e-6):
+    m = np.concatenate((p1, p2, p3), axis=0)
+    det = np.linalg.det(m)
+    return np.isclose(det, 0, atol=epsilon)
+
+def prune_path(path):
+    pruned_path = path[:]
+    
+    for i, _ in enumerate(path[:-2]):
+        p1 = point(path[i])
+        p2 = point(path[i+1])
+        p3 = point(path[i+2])
+        
+        if collinearity_check(p1, p2, p3):
+            pruned_path.remove(path[i+1])
+    
+    return pruned_path
