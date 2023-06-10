@@ -9,7 +9,9 @@ from planning_utils import a_star, heuristic, create_grid, prune_path
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
-from udacidrone.frame_utils import global_to_local
+from udacidrone.frame_utils import global_to_local, local_to_global
+
+import random
 
 
 class States(Enum):
@@ -141,20 +143,30 @@ class MotionPlanning(Drone):
         data = np.loadtxt('colliders.csv', delimiter=',', dtype='Float64', skiprows=2)
         
         # Define a grid for a particular altitude and safety margin around obstacles
-        grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
+        grid, north_offset, east_offset, north_size, east_size = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
         # Define starting point on the grid (this is just grid center)
         # grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center -- Done
         grid_start = (int(current_local_position[0])-north_offset, int(current_local_position[1])-east_offset)
-        
+        print("Grid start")
+        print(grid_start)
         # Set goal as some arbitrary position on the grid
         # grid_goal = (-north_offset + 10, -east_offset + 10)
         # TODO: adapt to set goal as latitude / longitude position and convert -- Done
-        goal_lat = 37.793058
-        goal_lon = -122.398964
+        goal_lat = 37.799669768530386
+        goal_lon = -122.39341596913285
+        # Randomly srt goal
+        # north_rand = 800 # random.randint(0, north_size) # 750.0 
+        # east_rand = 350 # random.randint(0, east_size) # 370.0
+        # goal_lon, goal_lat, _ = local_to_global( np.array([north_rand, east_rand, 0.0]),global_home=self.global_home)
+        # print ("Goal Lat = {0}, Lon = {1}".format(goal_lat, goal_lon))
+        
         local_goal = global_to_local(np.array([goal_lon, goal_lat, TARGET_ALTITUDE]), self.global_home)
-        grid_goal = (int(local_goal[0])-north_offset, int(local_goal[1])-east_offset)
+        print("Local Goal")
+        print(local_goal)
+        # grid_goal = (int(local_goal[0])-north_offset, int(local_goal[1])-east_offset)
+        grid_goal = (int(local_goal[0]), int(local_goal[1]))
         
         # Run A* to find a path from start to goal
         # TODO: add diagonal motions with a cost of sqrt(2) to your A* implementation -- Done
