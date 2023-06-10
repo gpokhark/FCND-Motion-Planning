@@ -80,3 +80,49 @@ It works!
 For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson. You could try implementing a vehicle model to take dynamic constraints into account, or implement a replanning method to invoke if you get off course or encounter unexpected obstacles.
 
 
+# SOLUTION EXPLAINED
+
+1. Started Code explanation
+    - I can see from the starter code in `planning_utils.py` that only allowed motions are NORTH, SOUTH, EAST, WEST.
+    - Diagonal motion is not set in it.
+    - It has heuristic function defined for A* algorithm calculation.
+
+2. Set home position to (lon0, lat0, 0) - As shown in the code snippet below I set the home position. This is the map center.
+    ```python
+    # TODO: set home position to (lon0, lat0, 0) -- Done
+        self.set_home_position(lon0, lat0, 0.0)
+        print("Home position set to Lat = {0}, Lon = {1}, Alt = {2}".format(lat0, lon0, 0.0))
+    ```
+    
+2. Retrieve current global position - In the code snippet below I am getting drones current global position.
+    ```python
+    # TODO: retrieve current global position -- Done
+        current_global_position = (self._longitude, self._latitude, self._altitude)
+    ```
+3. Convert to current local position using global_to_local() - In the code snippet below I am converting the global position to local position.
+    ```python
+    # TODO: convert to current local position using global_to_local() -- Done
+        current_local_position = global_to_local(current_global_position, self.global_home)
+    ```
+    - This eables me to start from any current location of the drone.
+4.  Adapt to set goal as latitude / longitude position and convert - I used some plotting scripts in [plots](./plots.ipynb) notebook to understand the local co-ordinates and then used the `local_to_global()` to get the gobal co-ordinates for my goal position.
+    ```python
+    # TODO: adapt to set goal as latitude / longitude position and convert
+        goal_lat = 37.799669768530386
+        goal_lon = -122.39341596913285
+    ```
+
+5. Add diagonal motions with a cost of sqrt(2) to your A* - I added diagonal motion to list of possible actions in the `planning_utils.py` script file.
+    - Total number of waypoints in the path = 486
+        ![grid_path](./images/grid_path.png)
+
+6. Prune path to minimize number of waypoints - I used collinearity check to prun the waypoints.
+    - Total number of waypoints in the pruned path = 93
+        ![pruned_grid_path](./images/grid_pruned_path.png)
+
+7. Try a different approach altogether - I tried to implement vornoi graph search as well.
+    - As you can see in the image below the graph does not cover the edge cases, I decided not to use it and instead stick with the grid based A star approach.
+    - Vornoi Graph Path - Total number of waypoints = 53
+        ![vornoi_path](./images/vornoi_path.png)
+    - Vornoi Graph Pruned Path - Total number of waypoints = 49
+        ![vornoi_pruned_path](./images/vornoi_pruned_path.png)
